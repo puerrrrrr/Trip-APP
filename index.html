@@ -189,9 +189,11 @@ function seed(){return{trips:[{id:'t1',tc:'OKI261',ec:'EDIT26',name:'202610沖�
  {date:'2026-10-31',w:{k:'sun',t:'28°C',n:'晴天，注意防曬。'},items:[{st:'main',k:'am',tm:'',name:'美麗海水族館',url:'',note:'建議早點入場。'}]}]}]}}
 let D,L,IMG={};
 try{D=JSON.parse(localStorage.getItem('trip_d3'));L=JSON.parse(localStorage.getItem('trip_l3'));IMG=JSON.parse(localStorage.getItem('trip_img3'))||{}}catch(e){}
-if(!D||!D.trips){D=seed();L=null}
+if(!D||!D.trips){D={trips:[]};L=null}
 (function(){const t=D&&D.trips&&D.trips.find(x=>x.tc==='OKI261');if(!t||t.demoLL)return;t.demoLL=1;t.places.forEach(p=>{if(p.n==='那霸機場'&&!p.ll)p.ll='26.1958, 127.6459'});t.days.forEach(d=>d.items.forEach(x=>{if(x.name==='那霸機場取車'&&!x.ll){x.ll='26.1958, 127.6459';if(!x.url)x.url='https://www.google.com/maps/search/?api=1&query='+encodeURIComponent('那霸機場')}if(x.name==='美麗海水族館'&&!x.ll){x.ll='26.6943, 127.8779';if(!x.url)x.url='https://www.google.com/maps/search/?api=1&query='+encodeURIComponent('沖繩美麗海水族館')}}))})();
-if(!L)L={acct:null,cid:D.trips[0].id,ecs:{OKI261:1},loc:{},out:{}};
+if(!L)L={acct:null,cid:null,ecs:{},loc:{},out:{}};
+if(D.trips.some(t=>t.tc==='OKI261'&&t.upd&&t.upd.by==='範例')){D.trips=D.trips.filter(t=>!(t.tc==='OKI261'&&t.upd&&t.upd.by==='範例'));if(L.ecs)delete L.ecs.OKI261}
+if(!D.trips.find(t=>t.id===L.cid))L.cid=(D.trips[0]||{}).id||null;
 function save(){try{localStorage.setItem('trip_d3',JSON.stringify(D));localStorage.setItem('trip_l3',JSON.stringify(L));localStorage.setItem('trip_img3',JSON.stringify(IMG))}catch(e){}}
 const T=()=>D.trips.find(t=>t.id===L.cid);
 const ET=()=>D.trips.find(t=>t.id===U.eid);
@@ -215,7 +217,7 @@ function badge(){const b=$('#sync');if(b)b.textContent=!DB?'僅本機':!navigato
 addEventListener('online',()=>{flush();badge()});addEventListener('offline',badge);
 (async()=>{await Promise.resolve();flush();pullAll();pullExp();syncAccts()})();
 /* ---- 殼 ---- */
-function go(t){U.tab=t;R();if(t==='edit'&&!U.eid&&!Object.keys(L.ecs).length)askCode()}
+function go(t){U.tab=t;R();}
 function R(){const m=$('#main'),y=m.scrollTop;m.innerHTML=({edit:vEdit2,map:vMap2,trip:vTrip,hist:vHist,set:vSet2})[U.tab]();m.scrollTop=y;
  $('#nav').innerHTML=[['edit','pencil','編輯'],['map','pin','地圖'],['trip','plane','本次旅行'],['hist','folder','歷史'],['set','gear','設定']].map(t=>`<button class="${U.tab===t[0]?'on':''} ${t[0]==='trip'?'mid':''}" onclick="go('${t[0]}')"><span>${ic(t[1],t[0]==='trip'?30:23)}</span>${t[2]}</button>`).join('');
  if(U.tab==='trip'&&U.sub==='exp'){const s=$('.swipe');if(s)s.scrollLeft=U.exp*s.clientWidth}const mc=$('#mapc');if(mc){mc.scrollLeft=(mc.scrollWidth-mc.clientWidth)/2;mc.scrollTop=(mc.scrollHeight-mc.clientHeight)/2}if(U.tab==='map'&&useG())drawG();badge()}
@@ -225,7 +227,7 @@ const hero=(t,title,extra='')=>`<div class="hero" style="${t&&t.bg&&gi(t.bg)?`ba
 const tlabel=it=>it.k==='am'?'上午':it.k==='pm'?'下午':(it.tm||'');
 const mapUrl=(n,u)=>u||('https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(n||''));
 /* ---- 本次旅行 ---- */
-function vTrip(){const t=T();if(!t)return hero(null,'本次旅行')+'<div class="empty">還沒有旅行。<br>到「設定」輸入旅行碼加入。</div>';
+function vTrip(){const t=T();if(!t)return hero(null,'本次旅行')+'<div class="empty">還沒有行程。<br>請到「編輯」新增行程。<br><br><button class="pri" style="max-width:220px" onclick="go(\'edit\')">去編輯新增行程</button></div>';
  return tripHero(t)+`<div class="seg">${[['itin','行程'],['prep','行前準備'],['exp','記帳']].map(a=>`<button class="${U.sub===a[0]?'on':''}" onclick="U.sub='${a[0]}';R()">${a[1]}</button>`).join('')}</div>`+({itin:vItin2,prep:vPrep3,exp:vExp2})[U.sub](t)}
 const fmt=a=>a?new Date(a).toLocaleString('zh-TW',{hour12:false,month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'}):'—';
 function mergeIn(t,r){const old=t.days.map(d=>d.items.map(i=>i.img));Object.assign(t,r,{id:t.id,bg:t.bg,ec:t.ec});t.days.forEach((d,a)=>d.items.forEach((i,b)=>{if(!i.img&&old[a]&&old[a][b])i.img=old[a][b]}))}
@@ -403,7 +405,7 @@ function coord(o){const c=parseLL(o.ll);if(c)return c;const u=o.url||'';const m=
 U.mday=0;U.mz=1;let MP=[];
 const PIN='M0 0C-6-7-10-10.5-10-15a10 10 0 0120 0c0 4.5-4 8-10 15z';
 function pinSheet(i){const p=MP[i];openSheet(`<h3>${esc(p.n)}</h3><div class="sub" style="margin-bottom:10px">${esc(p.tag)}</div><a class="pri" style="display:block;text-align:center;text-decoration:none" href="${esc(mapUrl(p.n,p.u))}" target="_blank" rel="noopener">在 Google 地圖開啟</a>`)}
-function vMap2(){const t=T();if(!t)return hero(null,'地圖')+'<div class="empty">還沒有旅行。</div>';
+function vMap2(){const t=T();if(!t)return hero(null,'地圖')+'<div class="empty">還沒有行程。<br>請到「編輯」新增行程。<br><br><button class="pri" style="max-width:220px" onclick="go(\'edit\')">去編輯新增行程</button></div>';
  if(U.mday>=t.days.length)U.mday=0;const day=t.days[U.mday];
  const dayMain=day?day.items.filter(x=>x.url&&x.st!=='title'):[];
  const places=t.places.map(p=>({n:p.n,u:p.url,tag:p.kind==='hotel'?'飯店':'機場',c:coord(p),k:'b'}));
@@ -487,11 +489,11 @@ function addExp(){const t=T(),w=$('#ew').value.trim(),a=parseFloat($('#ea').valu
  if(!w||!(a>0)||!(r>0)||!sp.length){alert('請填寫項目、金額、匯率，並至少選一位分攤者。');return}
  LC().ex.unshift({what:w,amt:a,cur:$('#ec').value,rate:r,payer:$('#ep').value,split:sp});save();flush();R()}
 /* ---- 地圖 ---- */
-function vMap(){const t=T();if(!t)return hero(null,'地圖')+'<div class="empty">還沒有旅行。</div>';
+function vMap(){const t=T();if(!t)return hero(null,'地圖')+'<div class="empty">還沒有行程。<br>請到「編輯」新增行程。<br><br><button class="pri" style="max-width:220px" onclick="go(\'edit\')">去編輯新增行程</button></div>';
  const pl=[...t.places.map(p=>({n:p.n,u:p.url,tag:p.kind==='hotel'?'飯店':'機場'})),...t.days.flatMap((d,i)=>d.items.filter(x=>x.url&&x.st!=='title').map(x=>({n:x.name,u:x.url,tag:'Day '+(i+1)})))];
  return hero(t)+`<div class="pad" style="padding-top:16px">${pl.length?pl.map(p=>`<div class="ck"><span style="flex:1"><small>${esc(p.tag)}</small><br><b>${esc(p.n)}</b></span><a class="ib" href="${esc(mapUrl(p.n,p.u))}" target="_blank" rel="noopener" aria-label="導航">${ic('nav',20)}</a></div>`).join(''):'<div class="empty">沒有地點。</div>'}<div class="sub" style="text-align:center">點導航會用 Google 地圖開啟（需網路）。</div></div>`}
 /* ---- 歷史 ---- */
-function vHist(){return hero(null,'歷史')+`<div class="pad" style="padding-top:16px">${D.trips.map(t=>`<button class="pcard" style="width:100%;margin-bottom:10px" onclick="L.cid='${t.id}';U.day=0;U.tab='trip';save();R()"><div class="im" style="${gi(t.bg)?`background-image:${gi(t.bg)}`:''}">${gi(t.bg)?'':ic('folder',26)}</div><div class="tx"><b>${esc(t.name)}</b><small>${t.days.length} 天${t.id===L.cid?'・使用中':''}${L.ecs[t.tc]?'・可編輯':'・僅檢視'}</small></div></button>`).join('')||'<div class="empty">還沒有旅行。</div>'}</div>`}
+function vHist(){return hero(null,'歷史')+`<div class="pad" style="padding-top:16px">${D.trips.map(t=>`<button class="pcard" style="width:100%;margin-bottom:10px" onclick="L.cid='${t.id}';U.day=0;U.tab='trip';save();R()"><div class="im" style="${gi(t.bg)?`background-image:${gi(t.bg)}`:''}">${gi(t.bg)?'':ic('folder',26)}</div><div class="tx"><b>${esc(t.name)}</b><small>${t.days.length} 天${t.id===L.cid?'・使用中':''}${L.ecs[t.tc]?'・可編輯':'・僅檢視'}</small></div></button>`).join('')||'<div class="empty">還沒有行程。<br>請到「編輯」新增行程。<br><br><button class="pri" style="max-width:220px" onclick="go(\'edit\')">去編輯新增行程</button></div>'}</div>`}
 /* ---- 編輯 ---- */
 function askCode(){openSheet(`<h3>輸入編輯碼</h3><input id="ecd" placeholder="編輯碼" autocapitalize="characters"><div style="height:10px"></div><button class="pri" onclick="unlock()">取得編輯權</button><p class="sub">輸入一次即永久擁有該行程的編輯權。</p>`)}
 async function unlock(){if(!navigator.onLine){alert('編輯需要網路連線');return}const c=$('#ecd').value.trim().toUpperCase();let t=D.trips.find(x=>x.ec===c);
