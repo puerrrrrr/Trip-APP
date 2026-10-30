@@ -213,7 +213,7 @@ async function fetchTrip(tc){if(!DB||!navigator.onLine)return null;try{const s=a
 async function pullAll(){for(const t of D.trips){if(L.ecs[t.tc])continue;const r=await fetchTrip(t.tc);if(r&&r.v>(t.v||0))mergeIn(t,r)}save();R()}
 function badge(){const b=$('#sync');if(b)b.textContent=!DB?'僅本機':!navigator.onLine?'離線':Object.keys(L.out).length?'待上傳':'已同步'}
 addEventListener('online',()=>{flush();badge()});addEventListener('offline',badge);
-(async()=>{await Promise.resolve();flush();pullAll();pullExp()})();
+(async()=>{await Promise.resolve();flush();pullAll();pullExp();syncAccts()})();
 /* ---- 殼 ---- */
 function go(t){U.tab=t;R();if(t==='edit'&&!U.eid&&!Object.keys(L.ecs).length)askCode()}
 function R(){const m=$('#main'),y=m.scrollTop;m.innerHTML=({edit:vEdit2,map:vMap2,trip:vTrip,hist:vHist,set:vSet2})[U.tab]();m.scrollTop=y;
@@ -378,7 +378,7 @@ function vSet2(){const a=L.acct;return hero(null,'設定')+`<div class="pad" sty
  ${srow('帳號',a?esc(a.id)+'・'+esc(a.name):'未登入（點擊登入）','acctSheet()')}${srow('創建帳號','帳號＋顯示名稱','createSheet()')}${srow('分享','旅行碼、編輯碼','shareSheet()')}
  <div class="box"><h3>加行程</h3><div class="row"><input id="tcd" placeholder="旅行碼" autocapitalize="characters"><button class="ghost fit" style="width:auto" onclick="joinTrip()">加入</button></div></div>
  <div class="box"><h3>Google Maps 金鑰</h3><input id="gk" placeholder="貼上金鑰（AIza…）" value="${esc(L.gkey||'')}" autocapitalize="none" autocomplete="off"><div style="height:8px"></div><button class="ghost" onclick="setKey()">儲存金鑰</button><div class="sub" style="margin-top:6px">金鑰只存在這支手機，不會寫進網頁檔。沒有金鑰或離線時，地圖頁用示意地圖。</div></div><div class="box"><h3>快取</h3><div class="row" style="margin-bottom:10px"><span class="sub">本地圖片快取（${Object.keys(IMG).length} 張）</span><b style="text-align:right">${fmtB(imgBytes())}</b></div><button class="ghost" onclick="if(confirm('清除本機所有圖片快取？')){IMG={};save();R()}">清除本地圖片快取</button></div>
- <div class="sub" style="text-align:center;padding-bottom:10px">雲端：<span id="sync">…</span></div></div>`}
+ <div class="box"><h3>雲端連線</h3><div class="row" style="margin-bottom:8px"><span class="sub">狀態</span><b style="text-align:right" id="sync">…</b></div><button class="ghost" onclick="testCloud()">測試雲端連線</button><div class="sub" style="margin-top:6px">${DB?'已讀到 config.js 的 Supabase 設定。':'尚未設定：config.js 還是預設值，帳號與行程只會存在這支手機。'}</div></div></div>`}
 function acctSheet(){const a=L.acct;openSheet(`<h3>帳號</h3>${a?`<div class="box" style="background:var(--bg);box-shadow:none"><div class="sub">目前帳號</div><b>${esc(a.id)}</b><div class="sub" style="margin-top:6px">顯示名稱</div><b>${esc(a.name)}</b></div>`:''}<input id="ai" placeholder="輸入帳號登入"><div style="height:10px"></div><button class="pri" onclick="doLogin()">登入</button>${a?'<div style="height:8px"></div><button class="ghost" onclick="L.acct=null;save();closeSheet();R()">登出</button>':''}`)}
 const okId=x=>/^[\w.@+~:\-]+$/.test(x);
 async function doLogin(){const id=$('#ai').value.trim();if(!id)return;let a=L.accts.find(x=>x.id===id);
@@ -389,7 +389,7 @@ function createSheet(){openSheet(`<h3>創建帳號</h3><input id="ci" placeholde
 async function doCreate(){const id=$('#ci').value.trim(),name=$('#cn').value.trim();if(!id||!name){alert('請填帳號與顯示名稱');return}if(!okId(id)){alert('帳號只能用英數字與 . _ - @ + ~ :');return}
  if(L.accts.some(x=>x.id===id)){alert('這個帳號已存在');return}
  if(DB&&navigator.onLine){try{const r=await DB.doc('accts/'+id).get();if(r.exists){alert('這個帳號已被使用');return}await DB.doc('accts/'+id).set({name})}catch(e){}}
- const a={id,name};L.accts.push(a);L.acct=a;save();closeSheet();R()}
+ const a={id,name};L.accts.push(a);L.acct=a;save();closeSheet();R();if(!DB)alert('提醒：尚未連接雲端，這個帳號只存在這支手機。')}
 function shareSheet(){openSheet('<h3>分享</h3>'+(D.trips.map(t=>`<div class="box" style="background:var(--bg);box-shadow:none"><b>${esc(t.name)}</b><div class="sub">旅行碼 <span class="code">${esc(t.tc)}</span></div>${L.ecs[t.tc]&&t.ec?`<div class="sub">編輯碼 <span class="code">${esc(t.ec)}</span></div>`:''}</div>`).join('')||'<div class="empty">還沒有旅行碼</div>'))}
 IC.user='<circle cx="12" cy="8" r="4"/><path d="M4 21v-1a6 6 0 016-6h4a6 6 0 016 6v1"/>';
 function perPane(t,per){const tot={};per.forEach(e=>{const o=tot[e.payer]=tot[e.payer]||{T:0,F:0};o[e.cur]+=e.amt});
@@ -532,7 +532,7 @@ function vSet(){const a=L.acct;return hero(null,'設定')+`<div class="pad" styl
  <div class="box"><h3>加行程（僅檢視）</h3><div class="row"><input id="tcd" placeholder="旅行碼" autocapitalize="characters"><button class="ghost fit" style="width:auto" onclick="joinTrip()">加入</button></div></div>
  <div class="box"><h3>分享</h3>${D.trips.map(t=>`<div style="margin-bottom:10px"><b>${esc(t.name)}</b><div class="sub">旅行碼 <span class="code">${esc(t.tc)}</span>${L.ecs[t.tc]&&t.ec?`　編輯碼 <span class="code">${esc(t.ec)}</span>`:''}</div></div>`).join('')||'<span class="sub">尚無</span>'}</div>
  <div class="box"><h3>快取</h3><button class="ghost" onclick="if(confirm('清除本機所有圖片？')){IMG={};save();R()}">清除本地圖片快取</button></div>
- <div class="sub" style="text-align:center;padding-bottom:10px">雲端：<span id="sync">…</span></div></div>`}
+ <div class="box"><h3>雲端連線</h3><div class="row" style="margin-bottom:8px"><span class="sub">狀態</span><b style="text-align:right" id="sync">…</b></div><button class="ghost" onclick="testCloud()">測試雲端連線</button><div class="sub" style="margin-top:6px">${DB?'已讀到 config.js 的 Supabase 設定。':'尚未設定：config.js 還是預設值，帳號與行程只會存在這支手機。'}</div></div></div>`}
 function login(){const i=$('#ai').value.trim(),n=$('#an').value.trim();if(!i||!n){alert('請填帳號與顯示名稱');return}L.acct={id:i,name:n};save();R()}
 async function joinTrip(){const c=$('#tcd').value.trim().toUpperCase();let t=D.trips.find(x=>x.tc===c);
  if(!t){const r=await fetchTrip(c);if(!r){alert(navigator.onLine?'找不到這個旅行碼（或尚未連上雲端）':'離線中，無法查詢新的旅行碼');return}t=Object.assign(r,{id:'t'+Date.now(),bg:''});D.trips.push(t)}
@@ -576,8 +576,12 @@ async function doLogin(){const id=$('#ai').value.trim();if(!id)return;let a=L.ac
 async function doCreate(){const id=$('#ci').value.trim(),name=$('#cn').value.trim();if(!id||!name){alert('請填帳號與顯示名稱');return}if(!okId(id)){alert('帳號只能用英數字與 . _ - @ + ~ :');return}
  if(L.accts.some(x=>x.id===id)){alert('這個帳號已存在');return}
  if(DB&&navigator.onLine){try{const ok=await rpc('create_account',{p_id:id,p_name:name});if(!ok){alert('這個帳號已被使用');return}}catch(e){alert('無法連到 Supabase，請檢查 config.js 設定');return}}
- const a={id,name};L.accts.push(a);L.acct=a;save();closeSheet();R()}
+ const a={id,name};L.accts.push(a);L.acct=a;save();closeSheet();R();if(!DB)alert('提醒：尚未連接雲端，這個帳號只存在這支手機。')}
 
+async function testCloud(){if(!DB){alert('config.js 還是預設值（或沒有載入）。請填入 Supabase 的網址與金鑰、重新上傳後，重新開啟 app。');return}
+ if(!navigator.onLine){alert('目前離線');return}
+ try{await rpc('get_account',{p_id:'__ping__'});alert('連線成功：Supabase 與資料庫函式都正常。')}catch(e){alert('連線失敗：'+String(e.message||e).slice(0,300))}}
+async function syncAccts(){if(!DB||!navigator.onLine)return;for(const a of L.accts){try{await rpc('create_account',{p_id:a.id,p_name:a.name})}catch(e){}}}
 R();vInit();
 if('serviceWorker' in navigator&&location.protocol.startsWith('http'))addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
 </script>
