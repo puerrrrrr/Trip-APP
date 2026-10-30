@@ -157,6 +157,7 @@ input[type=checkbox]:checked{background-color:var(--ac);background-image:url("da
 </head>
 <body>
 <div id="app"><div id="main"></div><nav id="nav"></nav><div id="bk" onclick="closeSheet()"></div><div id="sheet"></div></div>
+<script src="config.js"></script>
 <script>
 const $=s=>document.querySelector(s);
 const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -212,7 +213,7 @@ async function fetchTrip(tc){if(!DB||!navigator.onLine)return null;try{const s=a
 async function pullAll(){for(const t of D.trips){if(L.ecs[t.tc])continue;const r=await fetchTrip(t.tc);if(r&&r.v>(t.v||0))mergeIn(t,r)}save();R()}
 function badge(){const b=$('#sync');if(b)b.textContent=!DB?'僅本機':!navigator.onLine?'離線':Object.keys(L.out).length?'待上傳':'已同步'}
 addEventListener('online',()=>{flush();badge()});addEventListener('offline',badge);
-(async()=>{await Promise.resolve();try{DB=await claude.use('db')}catch(e){}flush();pullAll()})();
+(async()=>{await Promise.resolve();flush();pullAll();pullExp()})();
 /* ---- 殼 ---- */
 function go(t){U.tab=t;R();if(t==='edit'&&!U.eid&&!Object.keys(L.ecs).length)askCode()}
 function R(){const m=$('#main'),y=m.scrollTop;m.innerHTML=({edit:vEdit2,map:vMap2,trip:vTrip,hist:vHist,set:vSet2})[U.tab]();m.scrollTop=y;
@@ -276,7 +277,7 @@ function vExp2(t){const all=LC().ex.map((e,i)=>({...e,i})),grp=all.filter(e=>!e.
   const vs=Object.values(pr);out=`<div class="box"><h3>雙幣各自結算</h3><div class="sub">不換匯，各付各的幣</div>${vs.length?vs.map(x=>gx(x.a,x.b,x.l)).join(''):'<div class="sub">不需要轉帳</div>'}</div>`}
  else{const trT=simplify(bal(t,grp,e=>e.cur==='T'?e.amt:e.amt*rt(t))),trF=simplify(bal(t,grp,e=>e.cur==='F'?e.amt:e.amt/rt(t)));
   out=`<div class="box"><h3>一幣結算・台幣</h3>${trT.length?trT.map(([a,b,v])=>gx(a,b,[nt(v)])).join(''):'<div class="sub">不需要轉帳</div>'}</div><div class="box"><div class="sub" style="margin-bottom:4px">同一份帳換成全外幣（${esc(t.fc)}）</div>${trF.length?trF.map(([a,b,v])=>gx(a,b,[fc2(v,t)])).join(''):'<div class="sub">不需要轉帳</div>'}</div>`}
- out=buildOut(t,grp);
+ out=buildOut(t,grp.concat(LC().rx||[]));
  const pp={};per.forEach(e=>{const o=pp[e.payer]=pp[e.payer]||{T:0,F:0};o[e.cur]+=e.amt});
  const pers=Object.keys(pp).length?`<div class="box"><h3>個人記帳</h3><div class="sub" style="margin-bottom:6px">不納入群體結算，只算本人應付。</div>${Object.entries(pp).map(([m,o])=>`<div class="row"><span>${esc(mn(m))}</span><b style="text-align:right">${[o.T?nt(o.T):'',o.F?fc2(o.F,t):''].filter(Boolean).join(' ＋ ')}</b></div>`).join('')}</div>`:'';
  const me0=L.acct&&t.members.includes(L.acct.id)?L.acct.id:t.members[0];
@@ -536,6 +537,47 @@ function login(){const i=$('#ai').value.trim(),n=$('#an').value.trim();if(!i||!n
 async function joinTrip(){const c=$('#tcd').value.trim().toUpperCase();let t=D.trips.find(x=>x.tc===c);
  if(!t){const r=await fetchTrip(c);if(!r){alert(navigator.onLine?'找不到這個旅行碼（或尚未連上雲端）':'離線中，無法查詢新的旅行碼');return}t=Object.assign(r,{id:'t'+Date.now(),bg:''});D.trips.push(t)}
  L.cid=t.id;U.tab='trip';save();R()}
+/* ---- Supabase（以 RPC 呼叫，資料表不對外開放） ---- */
+const SBC=window.SUPABASE||{};
+const sbOn=()=>!!(SBC.url&&SBC.key&&!/YOUR/i.test(SBC.url+SBC.key));
+async function rpc(fn,args){const h={'apikey':SBC.key,'Content-Type':'application/json'};if(/^eyJ/.test(SBC.key))h.Authorization='Bearer '+SBC.key;
+ const r=await fetch(SBC.url.replace(/\/$/,'')+'/rest/v1/rpc/'+fn,{method:'POST',headers:h,body:JSON.stringify(args||{})});
+ if(!r.ok)throw new Error(await r.text());const t=await r.text();return t?JSON.parse(t):null}
+DB=sbOn()?{sb:1}:null;
+async function fetchTrip(tc){if(!DB||!navigator.onLine)return null;try{const r=await rpc('get_trip',{p_tc:tc});if(!r||!r.data)return null;const d=r.data;d.v=r.v;d.upd={at:Date.parse(r.upd_at)||r.v,by:r.upd_by||''};return d}catch(e){return null}}
+async function flush(){if(!DB||!navigator.onLine)return;try{
+ for(const tc of Object.keys(L.out)){const t=D.trips.find(x=>x.tc===tc);if(!t||!L.ecs[tc]||!t.ec){delete L.out[tc];continue}
+  let ok=await rpc('update_trip',{p_ec:t.ec,p_data:strip(t),p_v:t.v,p_by:me()});
+  if(!ok)ok=await rpc('create_trip',{p_tc:t.tc,p_ec:t.ec,p_data:strip(t),p_by:me()});
+  delete L.out[tc]}
+ save();badge()}catch(e){}}
+async function unlock(){if(!navigator.onLine){alert('編輯需要網路連線');return}const c=$('#ecd').value.trim().toUpperCase();let t=D.trips.find(x=>x.ec===c);
+ if(!t&&DB){try{const r=await rpc('find_by_ec',{p_ec:c});if(r&&r.data){const d=r.data;d.v=r.v;t=D.trips.find(x=>x.tc===r.tc);if(!t){t=Object.assign(d,{id:'t'+Date.now(),bg:'',tc:r.tc});D.trips.push(t)}t.ec=c}}catch(e){}}
+ if(!t){alert('找不到這個編輯碼');return}L.ecs[t.tc]=1;L.cid=t.id;U.eid=t.id;save();closeSheet();R()}
+async function makeTrip(){const n=$('#nn').value.trim(),tc=$('#ntc').value.trim().toUpperCase(),ec=$('#nec').value.trim().toUpperCase();
+ if(!n||!/^[A-Z0-9]{4,}$/.test(tc)||!/^[A-Z0-9]{4,}$/.test(ec)||tc===ec){alert('請填名稱，並設定兩組不同的英數字碼（至少 4 碼）');return}
+ if(D.trips.some(x=>x.tc===tc||x.ec===ec)){alert('這組碼已被使用');return}
+ if(DB&&!navigator.onLine){alert('建立行程需要網路連線');return}
+ const t={id:'t'+Date.now(),tc,ec,name:n,bg:'',v:Date.now(),upd:{at:Date.now(),by:me()},members:L.acct?[L.acct.id]:['我'],fc:$('#nf').value.trim()||'外幣',rate:parseFloat($('#nr').value)||1,places:[],prep:{行李:[],門票:[]},days:[]};
+ if(DB){try{const ok=await rpc('create_trip',{p_tc:tc,p_ec:ec,p_data:strip(t),p_by:me()});if(!ok){alert('這組碼已被使用');return}}catch(e){alert('無法連到 Supabase，請檢查 config.js 設定');return}}
+ D.trips.push(t);L.ecs[tc]=1;L.cid=t.id;U.eid=t.id;save();closeSheet();R()}
+async function pullExp(){const t=T();if(!DB||!navigator.onLine||!t)return;try{const rows=await rpc('get_expenses',{p_tc:t.tc});
+ LC().rx=(rows||[]).filter(r=>!L.acct||r.acct!==L.acct.id).flatMap(r=>(r.data||[]).map(e=>({...e,from:r.acct,pe:false})));save();R()}catch(e){}}
+async function upExp(){const t=T();if(!L.acct){alert('請先到設定登入帳號');return}if(!DB||!navigator.onLine){alert('目前無法連線雲端，連線後再上傳');return}
+ const g=LC().ex.filter(e=>!e.pe);
+ try{const ok=await rpc('upload_expenses',{p_tc:t.tc,p_acct:L.acct.id,p_data:g.map(e=>({what:e.what,amt:e.amt,cur:e.cur,rate:e.rate,payer:e.payer,split:e.split}))});
+  if(!ok){alert('雲端找不到這趟旅行，請先由有編輯碼的人同步一次行程');return}
+  g.forEach(e=>e.up=true);save();await pullExp();R()}catch(e){alert('上傳失敗，請稍後再試')}}
+async function refresh(){const t=T();await flush();const r=await fetchTrip(t.tc);if(r&&r.v>(t.v||0)){mergeIn(t,r);save()}else if(!DB||!navigator.onLine)alert('目前無法連線雲端，顯示的是本機最新內容');await pullExp();R()}
+async function doLogin(){const id=$('#ai').value.trim();if(!id)return;let a=L.accts.find(x=>x.id===id);
+ if(!a&&DB&&navigator.onLine){try{const r=await rpc('get_account',{p_id:id});if(r)a={id:r.id,name:r.name}}catch(e){}}
+ if(!a){alert('找不到這個帳號，請先創建帳號');return}
+ if(!L.accts.some(x=>x.id===id))L.accts.push(a);L.acct=a;save();closeSheet();R()}
+async function doCreate(){const id=$('#ci').value.trim(),name=$('#cn').value.trim();if(!id||!name){alert('請填帳號與顯示名稱');return}if(!okId(id)){alert('帳號只能用英數字與 . _ - @ + ~ :');return}
+ if(L.accts.some(x=>x.id===id)){alert('這個帳號已存在');return}
+ if(DB&&navigator.onLine){try{const ok=await rpc('create_account',{p_id:id,p_name:name});if(!ok){alert('這個帳號已被使用');return}}catch(e){alert('無法連到 Supabase，請檢查 config.js 設定');return}}
+ const a={id,name};L.accts.push(a);L.acct=a;save();closeSheet();R()}
+
 R();vInit();
 if('serviceWorker' in navigator&&location.protocol.startsWith('http'))addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
 </script>
