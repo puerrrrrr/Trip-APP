@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>出去玩</title>
-<meta name="application-name" content="出去玩"><meta name="apple-mobile-web-app-title" content="出去玩"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="theme-color" content="#F1E8D2">
+<meta name="application-name" content="出去玩"><meta name="apple-mobile-web-app-title" content="出去玩"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="theme-color" content="#F1E8D2"><meta name="app-v" content="20261031b">
 <link rel="manifest" href="manifest.webmanifest"><link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png"><link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@600;700&display=swap">
 <style>
@@ -210,12 +210,12 @@ async function flush(){if(!DB||!navigator.onLine)return;try{
  for(const tc of Object.keys(L.out)){const t=D.trips.find(x=>x.tc===tc);if(!t||!L.ecs[tc]){delete L.out[tc];continue}
   await DB.doc('trips/'+tc).set({json:JSON.stringify(strip(t)),v:t.v});await DB.doc('edits/'+t.ec).set({tc});delete L.out[tc]}
  for(const id of Object.keys(L.xo||{})){const t=D.trips.find(x=>x.id===id);if(t&&L.acct){await DB.doc('exp/'+t.tc+'_'+L.acct.id).set({json:JSON.stringify((L.loc[id]||{}).ex||[])})}delete L.xo[id]}
- save();badge()}catch(e){}}
+ save();badge()}catch(e){SYNCERR=String(e.message||e).slice(0,200)}}
 async function fetchTrip(tc){if(!DB||!navigator.onLine)return null;try{const s=await DB.doc('trips/'+tc).get();return s.exists?JSON.parse(s.data().json):null}catch(e){return null}}
 async function pullAll(){for(const t of D.trips){if(L.ecs[t.tc])continue;const r=await fetchTrip(t.tc);if(r&&r.v>(t.v||0))mergeIn(t,r)}save();R()}
 function badge(){const b=$('#sync');if(b)b.textContent=!DB?'僅本機':!navigator.onLine?'離線':Object.keys(L.out).length?'待上傳':'已同步'}
 addEventListener('online',()=>{flush();badge()});addEventListener('offline',badge);
-(async()=>{await Promise.resolve();flush();pullAll();pullExp();syncAccts()})();
+(async()=>{await Promise.resolve();flush();pullAll();pullExp();syncAccts();syncTrips()})();
 /* ---- 殼 ---- */
 function go(t){U.tab=t;R();}
 function R(){const m=$('#main'),y=m.scrollTop;m.innerHTML=({edit:vEdit2,map:vMap2,trip:vTrip,hist:vHist,set:vSet2})[U.tab]();m.scrollTop=y;
@@ -380,7 +380,7 @@ function vSet2(){const a=L.acct;return hero(null,'設定')+`<div class="pad" sty
  ${srow('帳號',a?esc(a.id)+'・'+esc(a.name):'未登入（點擊登入）','acctSheet()')}${srow('創建帳號','帳號＋顯示名稱','createSheet()')}${srow('分享','旅行碼、編輯碼','shareSheet()')}
  <div class="box"><h3>加行程</h3><div class="row"><input id="tcd" placeholder="旅行碼" autocapitalize="characters"><button class="ghost fit" style="width:auto" onclick="joinTrip()">加入</button></div></div>
  <div class="box"><h3>Google Maps 金鑰</h3><input id="gk" placeholder="貼上金鑰（AIza…）" value="${esc(L.gkey||'')}" autocapitalize="none" autocomplete="off"><div style="height:8px"></div><button class="ghost" onclick="setKey()">儲存金鑰</button><div class="sub" style="margin-top:6px">金鑰只存在這支手機，不會寫進網頁檔。沒有金鑰或離線時，地圖頁用示意地圖。</div></div><div class="box"><h3>快取</h3><div class="row" style="margin-bottom:10px"><span class="sub">本地圖片快取（${Object.keys(IMG).length} 張）</span><b style="text-align:right">${fmtB(imgBytes())}</b></div><button class="ghost" onclick="if(confirm('清除本機所有圖片快取？')){IMG={};save();R()}">清除本地圖片快取</button></div>
- <div class="box"><h3>雲端連線</h3><div class="row" style="margin-bottom:8px"><span class="sub">狀態</span><b style="text-align:right" id="sync">…</b></div><button class="ghost" onclick="testCloud()">測試雲端連線</button><div class="sub" style="margin-top:6px">${DB?'已讀到 config.js 的 Supabase 設定。':'尚未設定：config.js 還是預設值，帳號與行程只會存在這支手機。'}</div></div></div>`}
+ <div class="box"><h3>版本</h3><div class="row" style="margin-bottom:8px"><span class="sub">目前版本</span><b style="text-align:right">${esc(APP_V)}</b></div><button class="ghost" onclick="forceUpdate()">更新 app（不會清除你的資料）</button></div><div class="box"><h3>雲端連線</h3><div class="row" style="margin-bottom:8px"><span class="sub">狀態</span><b style="text-align:right" id="sync">…</b></div><button class="ghost" onclick="testCloud()">測試雲端連線</button><div style="height:8px"></div><button class="ghost" onclick="uploadTrips()">把本機行程上傳到雲端</button>${SYNCERR?`<div class="sub" style="margin-top:6px;color:var(--st)">最近錯誤：${esc(SYNCERR)}</div>`:''}<div class="sub" style="margin-top:6px">${DB?'已讀到 config.js 的 Supabase 設定。':'尚未設定：config.js 還是預設值，帳號與行程只會存在這支手機。'}</div></div></div>`}
 function acctSheet(){const a=L.acct;openSheet(`<h3>帳號</h3>${a?`<div class="box" style="background:var(--bg);box-shadow:none"><div class="sub">目前帳號</div><b>${esc(a.id)}</b><div class="sub" style="margin-top:6px">顯示名稱</div><b>${esc(a.name)}</b></div>`:''}<input id="ai" placeholder="輸入帳號登入"><div style="height:10px"></div><button class="pri" onclick="doLogin()">登入</button>${a?'<div style="height:8px"></div><button class="ghost" onclick="L.acct=null;save();closeSheet();R()">登出</button>':''}`)}
 const okId=x=>/^[\w.@+~:\-]+$/.test(x);
 async function doLogin(){const id=$('#ai').value.trim();if(!id)return;let a=L.accts.find(x=>x.id===id);
@@ -534,7 +534,7 @@ function vSet(){const a=L.acct;return hero(null,'設定')+`<div class="pad" styl
  <div class="box"><h3>加行程（僅檢視）</h3><div class="row"><input id="tcd" placeholder="旅行碼" autocapitalize="characters"><button class="ghost fit" style="width:auto" onclick="joinTrip()">加入</button></div></div>
  <div class="box"><h3>分享</h3>${D.trips.map(t=>`<div style="margin-bottom:10px"><b>${esc(t.name)}</b><div class="sub">旅行碼 <span class="code">${esc(t.tc)}</span>${L.ecs[t.tc]&&t.ec?`　編輯碼 <span class="code">${esc(t.ec)}</span>`:''}</div></div>`).join('')||'<span class="sub">尚無</span>'}</div>
  <div class="box"><h3>快取</h3><button class="ghost" onclick="if(confirm('清除本機所有圖片？')){IMG={};save();R()}">清除本地圖片快取</button></div>
- <div class="box"><h3>雲端連線</h3><div class="row" style="margin-bottom:8px"><span class="sub">狀態</span><b style="text-align:right" id="sync">…</b></div><button class="ghost" onclick="testCloud()">測試雲端連線</button><div class="sub" style="margin-top:6px">${DB?'已讀到 config.js 的 Supabase 設定。':'尚未設定：config.js 還是預設值，帳號與行程只會存在這支手機。'}</div></div></div>`}
+ <div class="box"><h3>版本</h3><div class="row" style="margin-bottom:8px"><span class="sub">目前版本</span><b style="text-align:right">${esc(APP_V)}</b></div><button class="ghost" onclick="forceUpdate()">更新 app（不會清除你的資料）</button></div><div class="box"><h3>雲端連線</h3><div class="row" style="margin-bottom:8px"><span class="sub">狀態</span><b style="text-align:right" id="sync">…</b></div><button class="ghost" onclick="testCloud()">測試雲端連線</button><div style="height:8px"></div><button class="ghost" onclick="uploadTrips()">把本機行程上傳到雲端</button>${SYNCERR?`<div class="sub" style="margin-top:6px;color:var(--st)">最近錯誤：${esc(SYNCERR)}</div>`:''}<div class="sub" style="margin-top:6px">${DB?'已讀到 config.js 的 Supabase 設定。':'尚未設定：config.js 還是預設值，帳號與行程只會存在這支手機。'}</div></div></div>`}
 function login(){const i=$('#ai').value.trim(),n=$('#an').value.trim();if(!i||!n){alert('請填帳號與顯示名稱');return}L.acct={id:i,name:n};save();R()}
 async function joinTrip(){const c=$('#tcd').value.trim().toUpperCase();let t=D.trips.find(x=>x.tc===c);
  if(!t){const r=await fetchTrip(c);if(!r){alert(navigator.onLine?'找不到這個旅行碼（或尚未連上雲端）':'離線中，無法查詢新的旅行碼');return}t=Object.assign(r,{id:'t'+Date.now(),bg:''});D.trips.push(t)}
@@ -552,7 +552,7 @@ async function flush(){if(!DB||!navigator.onLine)return;try{
   let ok=await rpc('update_trip',{p_ec:t.ec,p_data:strip(t),p_v:t.v,p_by:me()});
   if(!ok)ok=await rpc('create_trip',{p_tc:t.tc,p_ec:t.ec,p_data:strip(t),p_by:me()});
   delete L.out[tc]}
- save();badge()}catch(e){}}
+ save();badge()}catch(e){SYNCERR=String(e.message||e).slice(0,200)}}
 async function unlock(){if(!navigator.onLine){alert('編輯需要網路連線');return}const c=$('#ecd').value.trim().toUpperCase();let t=D.trips.find(x=>x.ec===c);
  if(!t&&DB){try{const r=await rpc('find_by_ec',{p_ec:c});if(r&&r.data){const d=r.data;d.v=r.v;t=D.trips.find(x=>x.tc===r.tc);if(!t){t=Object.assign(d,{id:'t'+Date.now(),bg:'',tc:r.tc});D.trips.push(t)}t.ec=c}}catch(e){}}
  if(!t){alert('找不到這個編輯碼');return}L.ecs[t.tc]=1;L.cid=t.id;U.eid=t.id;save();closeSheet();R()}
@@ -580,10 +580,28 @@ async function doCreate(){const id=$('#ci').value.trim(),name=$('#cn').value.tri
  if(DB&&navigator.onLine){try{const ok=await rpc('create_account',{p_id:id,p_name:name});if(!ok){alert('這個帳號已被使用');return}}catch(e){alert('無法連到 Supabase，請檢查 config.js 設定');return}}
  const a={id,name};L.accts.push(a);L.acct=a;save();closeSheet();R();if(!DB)alert('提醒：尚未連接雲端，這個帳號只存在這支手機。')}
 
+let SYNCERR='';
+async function syncTrips(){if(!DB||!navigator.onLine)return 0;let n=0;
+ for(const t of D.trips){if(!L.ecs[t.tc]||!t.ec)continue;
+  try{const r=await rpc('get_trip',{p_tc:t.tc});
+   if(!r){const ok=await rpc('create_trip',{p_tc:t.tc,p_ec:t.ec,p_data:strip(t),p_by:me()});if(ok)n++;else SYNCERR='「'+t.name+'」的旅行碼或編輯碼已被其他行程使用，無法上傳'}
+   else if((r.v||0)<(t.v||0)){await rpc('update_trip',{p_ec:t.ec,p_data:strip(t),p_v:t.v,p_by:me()});n++}}
+  catch(e){SYNCERR=String(e.message||e).slice(0,200)}}
+ return n}
+async function uploadTrips(){if(!DB){alert('config.js 還沒設定，無法上傳。');return}if(!navigator.onLine){alert('目前離線');return}
+ if(!D.trips.some(t=>L.ecs[t.tc]&&t.ec)){alert('這支手機上沒有你有編輯權的行程。請先到「編輯」新增行程或輸入編輯碼。');return}
+ SYNCERR='';const n=await syncTrips();alert(SYNCERR?'上傳失敗：'+SYNCERR:(n?'完成：已上傳／更新 '+n+' 個行程':'雲端已是最新，沒有需要上傳的行程'));R()}
 async function testCloud(){if(!DB){alert('config.js 還是預設值（或沒有載入）。請填入 Supabase 的網址與金鑰、重新上傳後，重新開啟 app。');return}
  if(!navigator.onLine){alert('目前離線');return}
  try{await rpc('get_account',{p_id:'__ping__'});alert('連線成功：Supabase 與資料庫函式都正常。')}catch(e){alert('連線失敗：'+String(e.message||e).slice(0,300))}}
 async function syncAccts(){if(!DB||!navigator.onLine)return;for(const a of L.accts){try{await rpc('create_account',{p_id:a.id,p_name:a.name})}catch(e){}}}
+const APP_V=(document.querySelector('meta[name=app-v]')||{}).content||'?';
+async function forceUpdate(){try{const rs=await navigator.serviceWorker.getRegistrations();for(const r of rs)await r.unregister();for(const k of await caches.keys())await caches.delete(k)}catch(e){}location.replace(location.pathname+'?r='+Date.now())}
+async function checkUpdate(){if(!navigator.onLine||!location.protocol.startsWith('http'))return;
+ try{const t=await(await fetch(location.pathname+'?c='+Date.now(),{cache:'no-store'})).text();const m=t.match(/<meta name="app-v" content="([^"]+)">/);
+  if(m&&m[1]!==APP_V&&!document.getElementById('upd')){const b=document.createElement('div');b.id='upd';b.style.cssText='position:fixed;left:12px;right:12px;top:calc(env(safe-area-inset-top,0px) + 8px);z-index:50;background:#3A2E21;color:#FAF4E4;border-radius:14px;padding:10px 14px;display:flex;gap:10px;align-items:center;box-shadow:0 6px 18px rgba(0,0,0,.3);max-width:456px;margin:0 auto';
+   b.innerHTML='<span style="flex:1">有新版本</span><button style="background:#FAF4E4;color:#3A2E21;border-radius:10px;padding:6px 14px;font-weight:700" onclick="forceUpdate()">立即更新</button>';document.body.appendChild(b)}}catch(e){}}
+checkUpdate();document.addEventListener('visibilitychange',()=>{if(!document.hidden)checkUpdate()});
 R();vInit();
 if('serviceWorker' in navigator&&location.protocol.startsWith('http'))addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
 </script>
