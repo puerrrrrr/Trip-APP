@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>出去玩</title>
-<meta name="application-name" content="出去玩"><meta name="apple-mobile-web-app-title" content="出去玩"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="theme-color" content="#F1E8D2"><meta name="app-v" content="20261031c">
+<meta name="application-name" content="出去玩"><meta name="apple-mobile-web-app-title" content="出去玩"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="theme-color" content="#F1E8D2"><meta name="app-v" content="20261031d">
 <link rel="manifest" href="manifest.webmanifest"><link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png"><link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@600;700&display=swap">
 <style>
@@ -218,7 +218,7 @@ addEventListener('online',()=>{flush();badge()});addEventListener('offline',badg
 (async()=>{await Promise.resolve();flush();pullAll();pullExp();syncAccts();syncTrips()})();
 /* ---- 殼 ---- */
 function go(t){U.tab=t;R();}
-function R(){const m=$('#main'),y=m.scrollTop;m.innerHTML=({edit:vEdit2,map:vMap2,trip:vTrip,hist:vHist,set:vSet2})[U.tab]();m.scrollTop=y;
+function R(){const m=$('#main'),y=m.scrollTop;m.innerHTML=({edit:vEditG,map:vMap2,trip:vTrip,hist:vHist,set:vSet2})[U.tab]();m.scrollTop=y;
  $('#nav').innerHTML=[['edit','pencil','編輯'],['map','pin','地圖'],['trip','plane','本次旅行'],['hist','folder','歷史'],['set','gear','設定']].map(t=>`<button class="${U.tab===t[0]?'on':''} ${t[0]==='trip'?'mid':''}" onclick="go('${t[0]}')"><span>${ic(t[1],t[0]==='trip'?30:23)}</span>${t[2]}</button>`).join('');
  if(U.tab==='trip'&&U.sub==='exp'){const s=$('.swipe');if(s)s.scrollLeft=U.exp*s.clientWidth}const mc=$('#mapc');if(mc){mc.scrollLeft=(mc.scrollWidth-mc.clientWidth)/2;mc.scrollTop=(mc.scrollHeight-mc.clientHeight)/2}if(U.tab==='map'&&useG())drawG();badge()}
 function openSheet(h){$('#sheet').innerHTML='<div class="grip"></div>'+h;$('#sheet').classList.add('on');$('#bk').classList.add('on')}
@@ -381,7 +381,7 @@ function vSet2(){const a=L.acct;return hero(null,'設定')+`<div class="pad" sty
  <div class="box"><h3>加行程</h3><div class="row"><input id="tcd" placeholder="旅行碼" autocapitalize="characters"><button class="ghost fit" style="width:auto" onclick="joinTrip()">加入</button></div></div>
  <div class="box"><h3>Google Maps 金鑰</h3><input id="gk" placeholder="貼上金鑰（AIza…）" value="${esc(L.gkey||'')}" autocapitalize="none" autocomplete="off"><div style="height:8px"></div><button class="ghost" onclick="setKey()">儲存金鑰</button><div class="sub" style="margin-top:6px">金鑰只存在這支手機，不會寫進網頁檔。沒有金鑰或離線時，地圖頁用示意地圖。</div></div><div class="box"><h3>快取</h3><div class="row" style="margin-bottom:10px"><span class="sub">本地圖片快取（${Object.keys(IMG).length} 張）</span><b style="text-align:right">${fmtB(imgBytes())}</b></div><button class="ghost" onclick="if(confirm('清除本機所有圖片快取？')){IMG={};save();R()}">清除本地圖片快取</button></div>
  <div class="box"><h3>清除本機資料</h3><div class="sub" style="margin-bottom:8px">清除這支手機上的所有資料：行程、記帳、憑證、帳號登入與圖片。雲端（Supabase）上的資料不會被刪除。</div><button class="ghost" style="color:var(--st);font-weight:700" onclick="wipeAll()">清除本機所有資料</button></div><div class="box"><h3>版本</h3><div class="row" style="margin-bottom:8px"><span class="sub">目前版本</span><b style="text-align:right">${esc(APP_V)}</b></div><button class="ghost" onclick="forceUpdate()">更新 app（不會清除你的資料）</button></div><div class="box"><h3>雲端連線</h3><div class="row" style="margin-bottom:8px"><span class="sub">狀態</span><b style="text-align:right" id="sync">…</b></div><button class="ghost" onclick="testCloud()">測試雲端連線</button><div style="height:8px"></div><button class="ghost" onclick="uploadTrips()">把本機行程上傳到雲端</button>${SYNCERR?`<div class="sub" style="margin-top:6px;color:var(--st)">最近錯誤：${esc(SYNCERR)}</div>`:''}<div class="sub" style="margin-top:6px">${DB?'已讀到 config.js 的 Supabase 設定。':'尚未設定：config.js 還是預設值，帳號與行程只會存在這支手機。'}</div></div></div>`}
-function acctSheet(){const a=L.acct;openSheet(`<h3>帳號</h3>${a?`<div class="box" style="background:var(--bg);box-shadow:none"><div class="sub">目前帳號</div><b>${esc(a.id)}</b><div class="sub" style="margin-top:6px">顯示名稱</div><b>${esc(a.name)}</b></div>`:''}<input id="ai" placeholder="輸入帳號登入"><div style="height:10px"></div><button class="pri" onclick="doLogin()">登入</button>${a?'<div style="height:8px"></div><button class="ghost" onclick="L.acct=null;save();closeSheet();R()">登出</button>':''}`)}
+function acctSheet(){const a=L.acct;openSheet(`<h3>帳號</h3>${a?`<div class="box" style="background:var(--bg);box-shadow:none"><div class="sub">目前帳號</div><b>${esc(a.id)}</b><div class="sub" style="margin-top:6px">顯示名稱</div><b>${esc(a.name)}</b></div>`:''}<input id="ai" placeholder="輸入帳號登入"><div style="height:10px"></div><button class="pri" onclick="doLogin()">登入</button>${a?'<div style="height:8px"></div><button class="ghost" onclick="L.acct=null;U.eid=0;save();closeSheet();R()">登出</button>':''}`)}
 const okId=x=>/^[\w.@+~:\-]+$/.test(x);
 async function doLogin(){const id=$('#ai').value.trim();if(!id)return;let a=L.accts.find(x=>x.id===id);
  if(!a&&DB&&navigator.onLine){try{const r=await DB.doc('accts/'+id).get();if(r.exists)a={id,name:r.data().name}}catch(e){}}
@@ -446,6 +446,8 @@ async function drawG(){const el=$('#gmap');if(!el)return;
    icon:{path:'M0 0C-6-7-10-10.5-10-15a10 10 0 0120 0c0 4.5-4 8-10 15z',fillColor:col[k],fillOpacity:1,strokeColor:'#fff',strokeWeight:1.5,scale:1.5,labelOrigin:new google.maps.Point(0,-15)}});
   m.addListener('click',()=>pinSheet(i))}));
  if(MP.length>1)GM.fitBounds(b,60);else{GM.setCenter(b.getCenter());GM.setZoom(14)}}
+function needLogin(){if(L.acct)return false;alert('編輯需要先登入帳號。請到「設定」登入或創建帳號。');return true}
+function vEditG(){if(!L.acct)return hero(null,'編輯')+`<div class="empty">編輯需要先登入帳號。<br>請先登入，或創建一個帳號。<br><br><button class="pri" style="max-width:240px" onclick="U.tab='set';R();acctSheet()">去登入</button><div style="height:10px"></div><button class="ghost" style="max-width:240px;margin:0 auto" onclick="U.tab='set';R();createSheet()">創建帳號</button></div>`;return vEdit2()}
 function vItin(t){if(!t.days.length)return'<div class="empty">還沒有行程。</div>';if(U.day>=t.days.length)U.day=0;const d=t.days[U.day];
  return`<div class="days">${t.days.map((x,i)=>`<button class="chip dchip ${i===U.day?'on':''}" onclick="U.day=${i};U.wx=0;U.open='';R()"><small>Day ${i+1}</small>${esc((x.date||'').slice(5).replace('-','/'))||'—'}</button>`).join('')}</div><div class="pad">
  <button class="wx" onclick="U.wx=!U.wx;R()">${ic(d.w.k||'sun',30)}<span>${esc((WX.find(w=>w[0]===d.w.k)||['','天氣'])[1])}　${esc(d.w.t)}</span><i>${ic(U.wx?'up':'down',18)}</i></button>
@@ -495,11 +497,11 @@ function vMap(){const t=T();if(!t)return hero(null,'地圖')+'<div class="empty"
 /* ---- 歷史 ---- */
 function vHist(){return hero(null,'歷史')+`<div class="pad" style="padding-top:16px">${D.trips.map(t=>`<button class="pcard" style="width:100%;margin-bottom:10px" onclick="L.cid='${t.id}';U.day=0;U.tab='trip';save();R()"><div class="im" style="${gi(t.bg)?`background-image:${gi(t.bg)}`:''}">${gi(t.bg)?'':ic('folder',26)}</div><div class="tx"><b>${esc(t.name)}</b><small>${t.days.length} 天${t.id===L.cid?'・使用中':''}${L.ecs[t.tc]?'・可編輯':'・僅檢視'}</small></div></button>`).join('')||'<div class="empty">還沒有行程。<br>請到「編輯」新增行程。<br><br><button class="pri" style="max-width:220px" onclick="go(\'edit\')">去編輯新增行程</button></div>'}</div>`}
 /* ---- 編輯 ---- */
-function askCode(){openSheet(`<h3>輸入編輯碼</h3><input id="ecd" placeholder="編輯碼" autocapitalize="characters"><div style="height:10px"></div><button class="pri" onclick="unlock()">取得編輯權</button><p class="sub">輸入一次即永久擁有該行程的編輯權。</p>`)}
-async function unlock(){if(!navigator.onLine){alert('編輯需要網路連線');return}const c=$('#ecd').value.trim().toUpperCase();let t=D.trips.find(x=>x.ec===c);
+function askCode(){if(needLogin())return;openSheet(`<h3>輸入編輯碼</h3><input id="ecd" placeholder="編輯碼" autocapitalize="characters"><div style="height:10px"></div><button class="pri" onclick="unlock()">取得編輯權</button><p class="sub">輸入一次即永久擁有該行程的編輯權。</p>`)}
+async function unlock(){if(needLogin())return;if(!navigator.onLine){alert('編輯需要網路連線');return}const c=$('#ecd').value.trim().toUpperCase();let t=D.trips.find(x=>x.ec===c);
  if(!t&&DB){try{const s=await DB.doc('edits/'+c).get();if(s.exists){const tc=s.data().tc;t=D.trips.find(x=>x.tc===tc);const r=await fetchTrip(tc);if(!t&&r){t=Object.assign(r,{id:'t'+Date.now(),bg:''});D.trips.push(t)}if(t)t.ec=c}}catch(e){}}
  if(!t){alert('找不到這個編輯碼');return}L.ecs[t.tc]=1;L.cid=t.id;U.eid=t.id;save();closeSheet();R()}
-function newSheet(){openSheet(`<h3>創建新行程</h3><input id="nn" placeholder="行程名稱（例：202701東京）"><div style="height:8px"></div><div class="row"><input id="ntc" placeholder="旅行碼（自訂）" autocapitalize="characters"><input id="nec" placeholder="編輯碼（自訂）" autocapitalize="characters"></div><p class="sub">兩組碼互相獨立，建立後永久不變。至少 4 碼，限英數字。</p><div class="row"><input id="nf" placeholder="外幣（日圓）"><input id="nr" type="number" step="any" placeholder="1外幣=?台幣"></div><div style="height:10px"></div><button class="pri" onclick="makeTrip()">建立</button>`)}
+function newSheet(){if(needLogin())return;openSheet(`<h3>創建新行程</h3><input id="nn" placeholder="行程名稱（例：202701東京）"><div style="height:8px"></div><div class="row"><input id="ntc" placeholder="旅行碼（自訂）" autocapitalize="characters"><input id="nec" placeholder="編輯碼（自訂）" autocapitalize="characters"></div><p class="sub">兩組碼互相獨立，建立後永久不變。至少 4 碼，限英數字。</p><div class="row"><input id="nf" placeholder="外幣（日圓）"><input id="nr" type="number" step="any" placeholder="1外幣=?台幣"></div><div style="height:10px"></div><button class="pri" onclick="makeTrip()">建立</button>`)}
 async function makeTrip(){if(!navigator.onLine){alert('建立行程需要網路連線');return}const n=$('#nn').value.trim(),tc=$('#ntc').value.trim().toUpperCase(),ec=$('#nec').value.trim().toUpperCase();
  if(!n||!/^[A-Z0-9]{4,}$/.test(tc)||!/^[A-Z0-9]{4,}$/.test(ec)||tc===ec){alert('請填名稱，並設定兩組不同的英數字碼（至少 4 碼）');return}
  if(D.trips.some(x=>x.tc===tc||x.ec===ec)||await fetchTrip(tc)){alert('這組碼已被使用');return}
@@ -522,8 +524,8 @@ function vEdit(){const t=ET();
  <input value="${esc(it.name)}" placeholder="名稱 / 標題" ${P(p+'.name')}><div style="height:6px"></div><input value="${esc(it.url)}" placeholder="Google Map 網址（填了＝主地點導航）" ${P(p+'.url')}><div style="height:6px"></div><input value="${esc(it.ll)}" placeholder="座標（選填，用於地圖，例：26.2124, 127.6809）" ${P(p+'.ll')}><div style="height:6px"></div><textarea id="nt${i}" style="min-height:120px" placeholder="備註（OTS 代碼、營業時間…）。用上方工具加列點標題與導航。" ${P(p+'.note')}>${esc(it.note)}</textarea><div style="height:6px"></div><textarea placeholder="其餘導航（每行：名稱|網址）" ${P(p+'.more')}>${esc(it.more)}</textarea><div style="height:6px"></div><label class="ghost">${ic('img',18)} 地點圖片<input type="file" accept="image/*" hidden onchange="imgUp(this,'${p}.img')"></label></div>`}).join('')}
  <button class="ghost" onclick="ET().days[U.eday].items.push({st:'nav',k:'exact',tm:'09:00',name:'',url:'',note:''});touch(ET());R()">＋ 新增卡片</button>`:'<div class="empty">先新增一天。</div>'}</div>
  <div class="sub" style="text-align:right;padding-bottom:8px">更新於 ${new Date(t.upd.at).toLocaleString('zh-TW',{hour12:false})}・${esc(t.upd.by)}</div></div>`}
-function openEdit(id){if(!navigator.onLine){alert('編輯需要網路連線');return}U.eid=id;U.eday=0;R()}
-function setp(path,v){let o=ET();const p=path.split('.');for(let i=0;i<p.length-1;i++)o=o[p[i]];o[p[p.length-1]]=v;touch(ET())}
+function openEdit(id){if(needLogin())return;if(!navigator.onLine){alert('編輯需要網路連線');return}U.eid=id;U.eday=0;R()}
+function setp(path,v){if(!L.acct)return;let o=ET();const p=path.split('.');for(let i=0;i<p.length-1;i++)o=o[p[i]];o[p[p.length-1]]=v;touch(ET())}
 function addDay(){const t=ET(),l=t.days[t.days.length-1];let dt='';if(l&&l.date){const x=new Date(l.date);x.setDate(x.getDate()+1);dt=x.toISOString().slice(0,10)}t.days.push({date:dt,w:{k:'sun',t:'',n:''},items:[]});U.eday=t.days.length-1;touch(t);R()}
 function addPrep(c){const v=$('#np-'+c).value.trim();if(v){ET().prep[c].push({t:v});touch(ET());R()}}
 function addMember(){const v=$('#nmb').value.trim();if(v&&!ET().members.includes(v)){ET().members.push(v);touch(ET());R()}}
@@ -553,10 +555,10 @@ async function flush(){if(!DB||!navigator.onLine)return;try{
   if(!ok)ok=await rpc('create_trip',{p_tc:t.tc,p_ec:t.ec,p_data:strip(t),p_by:me()});
   delete L.out[tc]}
  save();badge()}catch(e){SYNCERR=String(e.message||e).slice(0,200)}}
-async function unlock(){if(!navigator.onLine){alert('編輯需要網路連線');return}const c=$('#ecd').value.trim().toUpperCase();let t=D.trips.find(x=>x.ec===c);
+async function unlock(){if(needLogin())return;if(!navigator.onLine){alert('編輯需要網路連線');return}const c=$('#ecd').value.trim().toUpperCase();let t=D.trips.find(x=>x.ec===c);
  if(!t&&DB){try{const r=await rpc('find_by_ec',{p_ec:c});if(r&&r.data){const d=r.data;d.v=r.v;t=D.trips.find(x=>x.tc===r.tc);if(!t){t=Object.assign(d,{id:'t'+Date.now(),bg:'',tc:r.tc});D.trips.push(t)}t.ec=c}}catch(e){}}
  if(!t){alert('找不到這個編輯碼');return}L.ecs[t.tc]=1;L.cid=t.id;U.eid=t.id;save();closeSheet();R()}
-async function makeTrip(){const n=$('#nn').value.trim(),tc=$('#ntc').value.trim().toUpperCase(),ec=$('#nec').value.trim().toUpperCase();
+async function makeTrip(){if(needLogin())return;const n=$('#nn').value.trim(),tc=$('#ntc').value.trim().toUpperCase(),ec=$('#nec').value.trim().toUpperCase();
  if(!n||!/^[A-Z0-9]{4,}$/.test(tc)||!/^[A-Z0-9]{4,}$/.test(ec)||tc===ec){alert('請填名稱，並設定兩組不同的英數字碼（至少 4 碼）');return}
  if(D.trips.some(x=>x.tc===tc||x.ec===ec)){alert('這組碼已被使用');return}
  if(DB&&!navigator.onLine){alert('建立行程需要網路連線');return}
