@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>出去玩</title>
-<meta name="application-name" content="出去玩"><meta name="apple-mobile-web-app-title" content="出去玩"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="theme-color" content="#F1E8D2"><meta name="app-v" content="20261031f">
+<meta name="application-name" content="出去玩"><meta name="apple-mobile-web-app-title" content="出去玩"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="theme-color" content="#F1E8D2"><meta name="app-v" content="20261031g">
 <link rel="manifest" href="manifest.webmanifest"><link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png"><link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@600;700&display=swap">
 <style>
@@ -153,6 +153,9 @@ input[type=checkbox]:checked{background-color:var(--ac);background-image:url("da
 .leg{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:8px;font-size:13px;color:var(--sub)}.leg span{display:flex;gap:5px;align-items:center}.leg i{width:11px;height:11px;border-radius:50%;display:block}
 .mapw{position:relative;border-radius:18px;overflow:hidden;box-shadow:var(--sh);background:var(--soft)}.mapc{height:360px;overflow:auto;-webkit-overflow-scrolling:touch}
 .mz{position:absolute;right:10px;bottom:10px;display:flex;flex-direction:column;gap:8px}
+.tb label.tbl{display:flex;gap:4px;align-items:center;padding:6px 11px;border-radius:99px;background:var(--card);border:1px solid var(--line);font-size:13px;cursor:pointer}
+.nimg{width:100%;border-radius:12px;margin:8px 0;display:block}
+.th{position:relative;width:56px;height:56px;border-radius:10px;background:var(--soft) center/cover;display:inline-block}.th button{position:absolute;top:-6px;right:-6px;width:20px;height:20px;border-radius:50%;background:var(--ink);color:var(--card);font-size:13px;line-height:1}
 </style>
 </head>
 <body>
@@ -348,8 +351,8 @@ function vEdit2(){const t=ET();if(!t)return vEdit();if(U.eday>=t.days.length)U.e
   day=`<div class="row"><input type="date" value="${esc(d.date)}" ${P(`days.${U.eday}.date`)}><button class="ghost fit" style="width:auto" onclick="ET().days.splice(U.eday,1);touch(ET());R()">刪除這天</button></div><div style="height:10px"></div>`+
   fold('w'+U.eday,'天氣',`<label style="display:flex;gap:8px;align-items:center;margin-bottom:6px"><input type="checkbox" ${w.auto===false?'':'checked'} onchange="setp('${wp}.auto',this.checked);R()">自動抓取天氣</label><div class="sub" style="margin-bottom:8px">自動抓不到（沒有座標、超過 16 天、離線且沒有快取）時，才會顯示下面手動填的內容。</div><div class="row"><select onchange="setp('${wp}.k',this.value)" style="flex:1.3">${WX.map(x=>`<option value="${x[0]}" ${w.k===x[0]?'selected':''}>${x[1]}</option>`).join('')}</select><input value="${esc(w.t)}" placeholder="26°C" ${P(wp+'.t')}><input value="${esc(w.r)}" placeholder="降雨 60%" ${P(wp+'.r')}></div><div style="height:6px"></div><textarea placeholder="其他備註" ${P(wp+'.n')}>${esc(w.n)}</textarea>`,[wl,w.t,w.r].filter(Boolean).join('・'))+
   d.items.map((it,i)=>{const p=`days.${U.eday}.items.${i}`,nv=nvMig(it);return fold(`c${U.eday}-${i}`,'行程卡片 '+(i+1),`<div class="row"><select onchange="setp('${p}.k',this.value);R()" style="max-width:112px;flex:none"><option value="exact" ${it.k==='exact'?'selected':''}>具體時間</option><option value="am" ${it.k==='am'?'selected':''}>上午</option><option value="pm" ${it.k==='pm'?'selected':''}>下午</option></select>${it.k==='exact'?`<input type="time" value="${esc(it.tm)}" ${P(p+'.tm')}>`:'<span></span>'}<button class="x fit" onclick="curItem(${i}),ET().days[U.eday].items.splice(${i},1);touch(ET());R()">${ic('x',18)}</button></div><div style="height:6px"></div><input value="${esc(it.name)}" placeholder="名稱 / 標題" ${P(p+'.name')}><div style="height:6px"></div><input value="${esc(it.url)}" placeholder="Google Map 網址（填了＝主地點導航）" ${P(p+'.url')}><div style="height:6px"></div><input value="${esc(it.ll)}" placeholder="座標（選填，用於地圖，例：26.2124, 127.6809）" ${P(p+'.ll')}>
-   <div class="tb"><button onclick="bulletTitle(${i})">${ic('list',16)}列點標題</button><button onclick="navSheet(${i},-1)">${ic('plus',16)}導航</button></div>
-   <textarea id="nt${i}" style="min-height:120px" placeholder="備註（OTS 代碼、營業時間…）。用上方工具加列點標題與導航。" ${P(p+'.note')}>${esc(it.note)}</textarea><div class="lkw">${links(it.note).map((x,k)=>`<button class="lkc" onclick="navSheet(${i},${k})">${ic('pin',14)}${esc(x.n)}</button>`).join('')}</div><div style="height:8px"></div><label class="ghost" style="display:flex;gap:8px;align-items:center;justify-content:center">${ic('img',18)}地點圖片<input type="file" accept="image/*" hidden onchange="imgUp(this,'${p}.img')"></label>`,tlabel(it)+' '+(it.name||''))}).join('')+`<button class="ghost" onclick="addCard()">＋ 新增行程卡片</button>`}
+   <div class="tb"><button onclick="bulletTitle(${i})">${ic('list',16)}列點標題</button><button onclick="navSheet(${i},-1)">${ic('plus',16)}導航</button><label class="tbl">${ic('img',16)}圖片<input type="file" accept="image/*" hidden onchange="noteImg(this,${i})"></label></div>
+   <textarea id="nt${i}" style="min-height:120px" placeholder="備註（OTS 代碼、營業時間…）。用上方工具加列點標題與導航。" ${P(p+'.note')}>${esc(it.note)}</textarea><div class="lkw">${links(it.note).map((x,k)=>`<button class="lkc" onclick="navSheet(${i},${k})">${ic('pin',14)}${esc(x.n)}</button>`).join('')}</div><div class="lkw">${[...(it.note||'').matchAll(IMR)].map((m,k)=>`<span class="th" style="background-image:url(${IMG[m[1]]||''})"><button onclick="delNoteImg(${i},${k})" aria-label="移除圖片">×</button></span>`).join('')}</div><div style="height:8px"></div><label class="ghost" style="display:flex;gap:8px;align-items:center;justify-content:center">${ic('img',18)}地點圖片<input type="file" accept="image/*" hidden onchange="imgUp(this,'${p}.img')"></label>`,tlabel(it)+' '+(it.name||''))}).join('')+`<button class="ghost" onclick="addCard()">＋ 新增行程卡片</button>`}
  return hero(t,'',`<button class="ib" style="margin-bottom:8px" onclick="U.eid='';R()" aria-label="離開編輯">${ic('x',20)}</button><span class="stamp" id="sync">…</span>`)+`<div class="pad" style="padding-top:14px">${fold('base','基本',base,t.name)}${fold('pl','飯店 / 機場',pl,t.places.length+' 處')}${fold('mem','人員',mem,t.members.length+' 人')}${fold('p行李','行李清單',prep('行李'),(t.prep['行李']||[]).length+' 項')}${fold('p門票','門票清單',prep('門票'),(t.prep['門票']||[]).length+' 項')}
  <h3 style="margin:16px 2px 8px">每日</h3><div class="days" style="padding:0 0 10px">${t.days.map((x,i)=>`<button class="chip ${i===U.eday?'on':''}" onclick="U.eday=${i};R()">Day ${i+1}</button>`).join('')}<button class="chip" onclick="addDay()">＋</button></div>${day}
  <div class="sub" style="text-align:right;padding:6px 0 8px">更新於 ${new Date(t.upd.at).toLocaleString('zh-TW',{hour12:false})}・${esc(t.upd.by)}</div></div>`}
@@ -360,7 +363,7 @@ function nvMig(it){let add=[];if(it.more){it.more.split('\n').filter(Boolean).fo
  if(it.nv&&it.nv.length){it.nv.forEach(x=>add.push(`- [${x.n}](${x.u})`));it.nv=[]}
  if(add.length)it.note=(it.note?it.note+'\n':'')+add.join('\n');return[]}
 const inl=x=>esc(x).replace(/\[([^\]]*)\]\((https?:[^)\s]*)\)/g,(m,a,u)=>`<a class="lk" href="${u}" target="_blank" rel="noopener">${a}</a>`);
-function noteHtml(it){nvMig(it);if(!it.note)return'';return'<div class="nt">'+it.note.split('\n').map(l=>l.startsWith('• ')?`<div class="bh"><span class="bd"></span><b>${inl(l.slice(2))}</b></div>`:l.startsWith('- ')?`<div class="bh"><span class="bd s"></span><span>${inl(l.slice(2))}</span></div>`:`<div>${inl(l)||'&nbsp;'}</div>`).join('')+'</div>'}
+function noteHtml(it){nvMig(it);if(!it.note)return'';return'<div class="nt">'+it.note.split('\n').map(l=>imgLine(l)||(l.startsWith('• ')?`<div class="bh"><span class="bd"></span><b>${inl(l.slice(2))}</b></div>`:l.startsWith('- ')?`<div class="bh"><span class="bd s"></span><span>${inl(l.slice(2))}</span></div>`:`<div>${inl(l)||'&nbsp;'}</div>`)).join('')+'</div>'}
 function bulletTitle(i){const ta=$('#nt'+i);const v=ta.value,pos=ta.selectionStart==null?v.length:ta.selectionStart;const ins=(pos>0&&v[pos-1]!=='\n'?'\n':'')+'• ';ta.value=v.slice(0,pos)+ins+v.slice(pos);const np=pos+ins.length;ta.focus();ta.setSelectionRange(np,np);setp(`days.${U.eday}.items.${i}.note`,ta.value)}
 function navSheet(i,k){const ta=$('#nt'+i);U.pos=ta?ta.selectionStart:null;const x=k>=0?links(curItem(i).note)[k]:{n:'',u:''};U.nv={i,k};
  openSheet(`<h3>${k>=0?'修改導航':'加導航'}</h3><input id="nvn" placeholder="地點名稱" value="${esc(x.n)}"><div style="height:8px"></div><input id="nvu" placeholder="Google Map 網址" value="${esc(x.u)}"><div style="height:10px"></div><button class="pri" onclick="saveNav()">${k>=0?'儲存':'加入備註'}</button>${k>=0?'<div style="height:8px"></div><button class="ghost" onclick="delNav()">刪除這個導航</button>':''}`)}
@@ -408,8 +411,8 @@ function pinSheet(i){const p=MP[i];openSheet(`<h3>${esc(p.n)}</h3><div class="su
 function vMap2(){const t=T();if(!t)return hero(null,'地圖')+'<div class="empty">還沒有行程。<br>請到「編輯」新增行程。<br><br><button class="pri" style="max-width:220px" onclick="go(\'edit\')">去編輯新增行程</button></div>';
  if(U.mday>=t.days.length)U.mday=0;const day=t.days[U.mday];
  const dayMain=day?day.items.filter(x=>x.url&&x.st!=='title'):[];
- const places=t.places.map(p=>({n:p.n,u:p.url,tag:p.kind==='hotel'?'飯店':'機場',c:coord(p),k:'b'}));
- const dpts=[];t.days.forEach((d,di)=>d.items.filter(x=>x.url&&x.st!=='title').forEach((x,ix)=>dpts.push({n:x.name,u:x.url,c:coord(x),k:di===U.mday?'r':'g',tag:'Day '+(di+1),no:ix+1})));
+ const places=t.places.map(p=>({n:p.n,u:p.url,tag:p.kind==='hotel'?'飯店':'機場',c:gc(p,p.n),k:'b'}));
+ const dpts=[];t.days.forEach((d,di)=>d.items.filter(x=>x.url&&x.st!=='title').forEach((x,ix)=>dpts.push({n:x.name,u:x.url,c:gc(x,x.name),k:di===U.mday?'r':'g',tag:'Day '+(di+1),no:ix+1})));
  MP=[...dpts,...places].filter(p=>p.c);
  const W=Math.max(300,Math.min(($('#main').clientWidth||400),480)-28),H=360,pad=46;let svg='';
  if(MP.length){const la=MP.reduce((a,p)=>a+p.c[0],0)/MP.length,kx=Math.cos(la*Math.PI/180);
@@ -426,7 +429,7 @@ function vMap2(){const t=T();if(!t)return hero(null,'地圖')+'<div class="empty
  <div class="mapw">${useG()?'<div id="gmap" style="height:380px"></div>':svg?`<div id="mapc" class="mapc">${svg}</div><div class="mz"><button class="ib" onclick="U.mz=Math.min(U.mz*1.5,12);R()" aria-label="放大">${ic('plus',20)}</button><button class="ib" onclick="U.mz=Math.max(U.mz/1.5,1);R()" aria-label="縮小"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M5 12h14"/></svg></button></div>`:`<div class="empty">還沒有座標。<br>在「編輯」行程卡片或飯店 / 機場的「座標」欄貼上<br>經緯度（例：26.2124, 127.6809），地標就會出現。</div>`}</div>
  ${useG()?'':'<div class="sub" style="margin:8px 0 12px">這是示意地圖：只依座標畫出地標位置，沒有街道底圖。到「設定」貼上 Google Maps 金鑰，連線時就會顯示真正的地圖。</div>'}
  ${dir?`<a class="pri" style="display:block;text-align:center;text-decoration:none;margin-bottom:12px" href="${esc(dir)}" target="_blank" rel="noopener">在 Google 地圖開啟當天路線</a>`:''}
- <h3 style="margin:6px 2px 8px">Day ${U.mday+1} 主地點</h3>${dayMain.length?dayMain.map(x=>row(x.name,x.url,'主地點',coord(x))).join(''):'<div class="sub" style="margin-bottom:10px">這天沒有填 Google Map 網址的地點。</div>'}
+ <h3 style="margin:6px 2px 8px">Day ${U.mday+1} 主地點</h3>${dayMain.length?dayMain.map(x=>row(x.name,x.url,'主地點',gc(x,x.name))).join(''):'<div class="sub" style="margin-bottom:10px">這天沒有填 Google Map 網址的地點。</div>'}
  <h3 style="margin:10px 2px 8px">飯店・機場</h3>${places.length?places.map(x=>row(x.n,x.u,x.tag,x.c)).join(''):'<div class="sub">尚未設定。</div>'}</div>`}
 /* ---- Google Maps ---- */
 const useG=()=>!!L.gkey&&navigator.onLine;
@@ -437,8 +440,9 @@ function loadG(){if(window.google&&google.maps)return Promise.resolve();if(gmaps
   const sc=document.createElement('script');sc.src='https://maps.googleapis.com/maps/api/js?key='+encodeURIComponent(L.gkey)+'&callback=__gm&language=zh-TW';sc.onerror=()=>{gmapsP=null;no()};document.head.appendChild(sc)});return gmapsP}
 async function drawG(){const el=$('#gmap');if(!el)return;
  try{await loadG()}catch(e){el.innerHTML='<div class="empty">Google 地圖載入失敗，請檢查網路與金鑰。</div>';return}
+ if(await geoMissing()){R();return}
  if(!MP.length){el.innerHTML='<div class="empty">還沒有座標。<br>在「編輯」行程卡片或飯店 / 機場的「座標」欄貼上經緯度，<br>地標就會出現。</div>';return}
- GM=new google.maps.Map(el,{center:{lat:MP[0].c[0],lng:MP[0].c[1]},zoom:10,disableDefaultUI:true,zoomControl:true,gestureHandling:'greedy',clickableIcons:false,styles:[{featureType:'poi',elementType:'all',stylers:[{visibility:'off'}]},{featureType:'transit',elementType:'all',stylers:[{visibility:'off'}]}]});
+ GM=new google.maps.Map(el,{center:{lat:MP[0].c[0],lng:MP[0].c[1]},zoom:10,disableDefaultUI:true,zoomControl:true,gestureHandling:'greedy',clickableIcons:false,styles:[{featureType:'poi',elementType:'all',stylers:[{visibility:'off'}]},{featureType:'transit',elementType:'all',stylers:[{visibility:'off'}]},{featureType:'road',elementType:'labels.icon',stylers:[{visibility:'off'}]}]});
  const b=new google.maps.LatLngBounds(),col={r:'#D93A2B',g:'#8E8E8E',b:'#2F6FDE'};
  ['g','b','r'].forEach((k,z)=>MP.forEach((p,i)=>{if(p.k!==k)return;const pos={lat:p.c[0],lng:p.c[1]};b.extend(pos);
   const m=new google.maps.Marker({map:GM,position:pos,title:p.n,zIndex:z+1,
@@ -476,6 +480,26 @@ function wxInfo(t,d){if(!d.date||d.w.auto===false)return null;const pl=wxPlace(t
  let[k,label]=wxCode(c.code);if(c.tmax<=10&&['sun','cloudy','overcast'].includes(k)){k='cold';label='寒冷'}
  const rain=(c.pp!=null?'降雨機率 '+c.pp+'%':'')+(c.ps>0?(c.pp!=null?'・':'')+'預估 '+c.ps+' mm':'');
  return{k,label,temp:Math.round(c.tmin)+'–'+Math.round(c.tmax)+'°C',rain:rain||'幾乎不會下雨'}}
+/* ---- 依名稱自動定位（Google Geocoding，需地圖金鑰） ---- */
+let GEO={};try{GEO=JSON.parse(localStorage.getItem('trip_geo3'))||{}}catch(e){}
+const gc=(o,name)=>coord(o)||GEO[name]||null;
+async function geoMissing(){const t=T();if(!t||!(window.google&&google.maps))return false;const names=[];
+ t.places.forEach(p=>{if(p.n&&!coord(p))names.push(p.n)});
+ t.days.forEach(d=>d.items.forEach(x=>{if(x.url&&x.st!=='title'&&x.name&&!coord(x))names.push(x.name)}));
+ const todo=[...new Set(names)].filter(n=>GEO[n]===undefined);if(!todo.length)return false;
+ const g=new google.maps.Geocoder();let changed=false;
+ for(const n of todo){try{const r=await g.geocode({address:n+(t.wloc?' '+t.wloc:'')});const l=r.results&&r.results[0]&&r.results[0].geometry.location;GEO[n]=l?[l.lat(),l.lng()]:false;changed=true}
+  catch(e){if(e&&(e.code==='ZERO_RESULTS')){GEO[n]=false;changed=true}else break}}
+ try{localStorage.setItem('trip_geo3',JSON.stringify(GEO))}catch(e){}return changed}
+/* ---- 備註裡的圖片（只存在上傳的那支手機） ---- */
+const IMR=/!\[\]\(img:([A-Za-z0-9]+)\)/g;
+function imgLine(l){const m=l.match(/^!\[\]\(img:([A-Za-z0-9]+)\)$/);if(!m)return'';return IMG[m[1]]?`<img class="nimg" alt="" src="${IMG[m[1]]}" onclick="imgView('${m[1]}')">`:'<div class="sub" style="margin-top:6px">（這張圖片只存在上傳它的那支手機）</div>'}
+function imgView(id){if(IMG[id])openSheet(`<img src="${IMG[id]}" alt="" style="width:100%;border-radius:12px">`)}
+function noteImg(el,i){const f=el.files[0];if(!f)return;const ta=$('#nt'+i),pos=ta?ta.selectionStart:null;const r=new FileReader();
+ r.onload=()=>{const im=new Image();im.onload=()=>{const k=Math.min(1,900/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=im.width*k;c.height=im.height*k;c.getContext('2d').drawImage(im,0,0,c.width,c.height);
+  const id='i'+Date.now();IMG[id]=c.toDataURL('image/jpeg',.78);let note=curItem(i).note||'';const p=Math.min(pos==null?note.length:pos,note.length),md='![](img:'+id+')';
+  note=note.slice(0,p)+(p>0&&note[p-1]!=='\n'?'\n':'')+md+(p<note.length&&note[p]!=='\n'?'\n':'')+note.slice(p);setNote(i,note);R()};im.src=r.result};r.readAsDataURL(f)}
+function delNoteImg(i,k){let note=curItem(i).note||'';const m=[...note.matchAll(IMR)][k];if(!m)return;note=(note.slice(0,m.index)+note.slice(m.index+m[0].length)).replace(/\n{3,}/g,'\n\n');setNote(i,note);R()}
 function vItin(t){if(!t.days.length)return'<div class="empty">還沒有行程。</div>';if(U.day>=t.days.length)U.day=0;const d=t.days[U.day];
  return`<div class="days">${t.days.map((x,i)=>`<button class="chip dchip ${i===U.day?'on':''}" onclick="U.day=${i};U.wx=0;U.open='';R()"><small>Day ${i+1}</small>${esc((x.date||'').slice(5).replace('-','/'))||'—'}</button>`).join('')}</div><div class="pad">
  <button class="wx" onclick="U.wx=!U.wx;R()">${ic(d.w.k||'sun',30)}<span>${esc((WX.find(w=>w[0]===d.w.k)||['','天氣'])[1])}　${esc(d.w.t)}</span><i>${ic(U.wx?'up':'down',18)}</i></button>
