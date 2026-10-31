@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>出去玩</title>
-<meta name="application-name" content="出去玩"><meta name="apple-mobile-web-app-title" content="出去玩"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="theme-color" content="#F1E8D2"><meta name="app-v" content="20261031g">
+<meta name="application-name" content="出去玩"><meta name="apple-mobile-web-app-title" content="出去玩"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="theme-color" content="#F1E8D2"><meta name="app-v" content="20261031h">
 <link rel="manifest" href="manifest.webmanifest"><link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png"><link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@600;700&display=swap">
 <style>
@@ -497,7 +497,7 @@ function imgLine(l){const m=l.match(/^!\[\]\(img:([A-Za-z0-9]+)\)$/);if(!m)retur
 function imgView(id){if(IMG[id])openSheet(`<img src="${IMG[id]}" alt="" style="width:100%;border-radius:12px">`)}
 function noteImg(el,i){const f=el.files[0];if(!f)return;const ta=$('#nt'+i),pos=ta?ta.selectionStart:null;const r=new FileReader();
  r.onload=()=>{const im=new Image();im.onload=()=>{const k=Math.min(1,900/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=im.width*k;c.height=im.height*k;c.getContext('2d').drawImage(im,0,0,c.width,c.height);
-  const id='i'+Date.now();IMG[id]=c.toDataURL('image/jpeg',.78);let note=curItem(i).note||'';const p=Math.min(pos==null?note.length:pos,note.length),md='![](img:'+id+')';
+  const id='i'+Date.now();IMG[id]=c.toDataURL('image/jpeg',.78);let note=curItem(i).note||'';const p=note.length,md='![](img:'+id+')';
   note=note.slice(0,p)+(p>0&&note[p-1]!=='\n'?'\n':'')+md+(p<note.length&&note[p]!=='\n'?'\n':'')+note.slice(p);setNote(i,note);R()};im.src=r.result};r.readAsDataURL(f)}
 function delNoteImg(i,k){let note=curItem(i).note||'';const m=[...note.matchAll(IMR)][k];if(!m)return;note=(note.slice(0,m.index)+note.slice(m.index+m[0].length)).replace(/\n{3,}/g,'\n\n');setNote(i,note);R()}
 function vItin(t){if(!t.days.length)return'<div class="empty">還沒有行程。</div>';if(U.day>=t.days.length)U.day=0;const d=t.days[U.day];
@@ -642,7 +642,25 @@ async function wipeAll(){
  try{await vTx('readwrite',o=>o.clear())}catch(e){}
  try{indexedDB.deleteDatabase('trip_vault')}catch(e){}
  try{for(const k of await caches.keys())await caches.delete(k)}catch(e){}
- location.replace(location.pathname+'?r='+Date.now())}
+ location.replace(location.pathname+'?r='+Date.now())}/* ---- Google 地圖地標：用自訂覆蓋層繪製（不依賴已棄用的 Marker） ---- */
+async function drawG(){const el=$('#gmap');if(!el)return;
+ try{await loadG()}catch(e){el.innerHTML='<div class="empty">Google 地圖載入失敗，請檢查網路與金鑰。</div>';return}
+ if(await geoMissing()){R();return}
+ const el2=$('#gmap');if(!el2)return;
+ if(!MP.length){el2.innerHTML='<div class="empty">還沒有座標。<br>在「編輯」行程卡片或飯店 / 機場的「座標」欄貼上經緯度，<br>地標就會出現。</div>';return}
+ try{
+  GM=new google.maps.Map(el2,{center:{lat:MP[0].c[0],lng:MP[0].c[1]},zoom:11,disableDefaultUI:true,zoomControl:true,gestureHandling:'greedy',clickableIcons:false,styles:[{featureType:'poi',elementType:'all',stylers:[{visibility:'off'}]},{featureType:'transit',elementType:'all',stylers:[{visibility:'off'}]},{featureType:'road',elementType:'labels.icon',stylers:[{visibility:'off'}]}]});
+  const b=new google.maps.LatLngBounds(),col={r:'#D93A2B',g:'#8E8E8E',b:'#2F6FDE'};
+  class Pin extends google.maps.OverlayView{
+   constructor(p,i,z){super();this.p=p;this.i=i;this.z=z;this.pos=new google.maps.LatLng(p.c[0],p.c[1])}
+   onAdd(){const p=this.p,d=document.createElement('div');d.style.cssText='position:absolute;transform:translate(-50%,-100%);cursor:pointer;z-index:'+this.z;
+    d.innerHTML='<svg width="30" height="36" viewBox="-11 -26 22 27" style="display:block;filter:drop-shadow(0 1px 2px rgba(0,0,0,.35))"><path d="'+PIN+'" fill="'+col[p.k]+'" stroke="#fff" stroke-width="1.5"/><circle cy="-15" r="4.5" fill="#fff"/>'+(p.k==='r'?'<text y="-11.6" text-anchor="middle" font-size="9" font-weight="700" fill="'+col.r+'">'+p.no+'</text>':'')+'</svg>'+(p.k!=='g'?'<div style="position:absolute;left:32px;top:6px;white-space:nowrap;font:700 12px sans-serif;color:#3A2E21;text-shadow:-1px -1px 0 #FAF4E4,1px -1px 0 #FAF4E4,-1px 1px 0 #FAF4E4,1px 1px 0 #FAF4E4">'+esc(p.n)+'</div>':'');
+    d.onclick=()=>pinSheet(this.i);this.d=d;this.getPanes().overlayMouseTarget.appendChild(d)}
+   draw(){const q=this.getProjection().fromLatLngToDivPixel(this.pos);this.d.style.left=q.x+'px';this.d.style.top=q.y+'px'}
+   onRemove(){if(this.d)this.d.remove()}}
+  ['g','b','r'].forEach((k,z)=>MP.forEach((p,i)=>{if(p.k!==k)return;b.extend({lat:p.c[0],lng:p.c[1]});new Pin(p,i,z+1).setMap(GM)}));
+  if(MP.length>1){GM.fitBounds(b,60);google.maps.event.addListenerOnce(GM,'idle',()=>{if(GM.getZoom()>15)GM.setZoom(15)})}else{GM.setCenter(b.getCenter());GM.setZoom(14)}
+ }catch(e){el2.insertAdjacentHTML('beforeend','<div style="position:absolute;left:8px;right:8px;bottom:8px;background:#fff;color:#a00;padding:8px;border-radius:8px;font-size:12px;z-index:5">地標建立失敗：'+esc(String(e.message||e))+'</div>')}}
 let SYNCERR='';
 async function syncTrips(){if(!DB||!navigator.onLine)return 0;let n=0;
  for(const t of D.trips){if(!L.ecs[t.tc]||!t.ec)continue;
