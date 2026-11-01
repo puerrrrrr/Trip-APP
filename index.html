@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>出去玩</title>
-<meta name="application-name" content="出去玩"><meta name="apple-mobile-web-app-title" content="出去玩"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="theme-color" content="#F1E8D2"><meta name="app-v" content="20261101b">
+<meta name="application-name" content="出去玩"><meta name="apple-mobile-web-app-title" content="出去玩"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="theme-color" content="#F1E8D2"><meta name="app-v" content="20261101c">
 <link rel="manifest" href="manifest.webmanifest"><link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png"><link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@600;700&display=swap">
 <style>
@@ -347,7 +347,7 @@ function addCard(){const d=ET().days[U.eday];d.items.push({st:'nav',k:'exact',tm
 function vEdit2(){const t=ET();if(!t)return vEdit();if(U.eday>=t.days.length)U.eday=Math.max(0,t.days.length-1);const d=t.days[U.eday],P=p=>`onchange="setp('${p}',this.value)"`;
  const base=`<input value="${esc(t.name)}" onchange="setp('name',this.value);R()"><div style="height:8px"></div><input value="${esc(t.wloc)}" placeholder="天氣地點（選填，例：那霸）" ${P('wloc')}><div class="sub" style="margin:4px 0 8px">有座標的行程直接用座標查天氣；沒有座標時才用這個地點名稱。</div><div class="row"><label class="ghost">${ic('img',18)} 背景照片<input type="file" accept="image/*" hidden onchange="imgUp(this,'bg')"></label>${t.bg?`<button class="ghost fit" style="width:auto" onclick="setp('bg','');R()">移除</button>`:''}</div><div class="sub" style="margin-top:6px">會自動加上白色半透明遮罩。</div>`;
  const pl=t.places.map((p,i)=>`<div class="box" style="background:var(--bg);box-shadow:none;padding:10px"><div class="row"><select ${P(`places.${i}.kind`)} style="max-width:90px;flex:none"><option value="hotel" ${p.kind==='hotel'?'selected':''}>飯店</option><option value="airport" ${p.kind==='airport'?'selected':''}>機場</option></select><input value="${esc(p.n)}" placeholder="名稱" ${P(`places.${i}.n`)}><button class="x fit" onclick="ET().places.splice(${i},1);touch(ET());R()">${ic('x',18)}</button></div><div style="height:6px"></div><input value="${esc(p.url)}" placeholder="Google Map 網址" ${P(`places.${i}.url`)}><div style="height:6px"></div><input value="${esc(p.ll)}" placeholder="座標（選填，例：26.1958, 127.6459）" ${P(`places.${i}.ll`)}></div>`).join('')+`<button class="ghost" onclick="ET().places.push({kind:'hotel',n:'',url:''});touch(ET());R()">＋ 新增地點</button>`;
- const mem=t.members.map((m,i)=>`<div class="row" style="margin-bottom:6px"><span>${esc(m)}</span><button class="x fit" onclick="ET().members.splice(${i},1);touch(ET());R()">${ic('x',18)}</button></div>`).join('')+`<div class="row"><input id="nmb" placeholder="帳號"><button class="ghost fit" style="width:auto" onclick="addMember()">加入</button></div>`;
+ const mem=memb(t).map((m,i)=>`<div class="row" style="margin-bottom:6px"><span>${esc(mn(m))}${mn(m)!==m?` <small class="sub">（${esc(m)}）</small>`:''}</span><button class="x fit" onclick="rmMember(${i})" aria-label="移除">${ic('x',18)}</button></div>`).join('')+`<div class="row"><input id="nmb" placeholder="帳號"><button class="ghost fit" style="width:auto" onclick="addMember()">加入</button></div>`;
  const prep=c=>`<div data-sort="E:${c}">`+(t.prep[c]||[]).map((x,i,arr)=>`<div class="row" data-i="${i}" style="margin-bottom:6px">${mvb()}<input value="${esc(x.t)}" ${P(`prep.${c}.${i}.t`)}><button class="x fit" onclick="ET().prep['${c}'].splice(${i},1);touch(ET());R()">${ic('x',18)}</button></div>`).join('')+'</div>'+`<div class="row"><input id="np-${c}" placeholder="新增項目"><button class="ghost fit" style="width:auto" onclick="addPrep('${c}')">加入</button></div>`;
  let day='<div class="empty">先新增一天。</div>';
  if(d){const w=d.w,wl=(WX.find(x=>x[0]===w.k)||['',''])[1];const wp=`days.${U.eday}.w`;
@@ -531,7 +531,7 @@ async function ensureImgs(){if(!DB||!navigator.onLine)return;let got=false;
  if(got)R()}
 /* ---- 模組：成員（加入旅行碼的人自動成為人員，顯示名稱） ---- */
 let LM={},MN={};try{const x=JSON.parse(localStorage.getItem('trip_mn3')||'null');if(x){LM=x.LM||{};MN=x.MN||{}}}catch(e){}
-const memb=t=>[...new Set([...(t.members||[]),...((LM[t.tc]||[]).map(m=>m.acct))])];
+const memb=t=>{const rm=(t.removed||[]).map(x=>String(x).toLowerCase()),seen=new Set(),out=[];[...(t.members||[]),...((LM[t.tc]||[]).map(m=>m.acct))].forEach(m=>{const k=String(m).toLowerCase();if(rm.includes(k)||seen.has(k))return;seen.add(k);out.push(m)});return out};
 async function syncMembers(){if(!DB||!navigator.onLine)return;let ch=false;
  for(const t of D.trips){try{if(L.acct)await rpc('join_trip',{p_tc:t.tc,p_acct:L.acct.id,p_name:L.acct.name});const r=await rpc('get_members',{p_tc:t.tc});if(r){LM[t.tc]=r;r.forEach(m=>{MN[m.acct]=m.name});ch=true}}catch(e){}}
  if(ch){try{localStorage.setItem('trip_mn3',JSON.stringify({LM,MN}))}catch(e){}R()}}
@@ -639,7 +639,11 @@ function openEdit(id){if(needLogin())return;if(!navigator.onLine){alert('編輯�
 function setp(path,v){if(!L.acct)return;let o=ET();const p=path.split('.');for(let i=0;i<p.length-1;i++)o=o[p[i]];o[p[p.length-1]]=v;touch(ET())}
 function addDay(){const t=ET(),l=t.days[t.days.length-1];let dt='';if(l&&l.date){const x=new Date(l.date);x.setDate(x.getDate()+1);dt=x.toISOString().slice(0,10)}t.days.push({date:dt,w:{k:'sun',t:'',n:''},items:[]});U.eday=t.days.length-1;touch(t);R()}
 function addPrep(c){const v=$('#np-'+c).value.trim();if(v){ET().prep[c].push({t:v});touch(ET());R()}}
-function addMember(){const v=$('#nmb').value.trim();if(v&&!ET().members.includes(v)){ET().members.push(v);touch(ET());R()}}
+function rmMember(i){const t=ET(),m=memb(t)[i];if(m==null)return;if(!confirm('確定從人員移除「'+mn(m)+'」？'))return;
+ t.members=(t.members||[]).filter(x=>String(x).toLowerCase()!==String(m).toLowerCase());t.removed=[...(t.removed||[]),m];touch(t);R()}
+function addMember(){const v=$('#nmb').value.trim();if(!v)return;const t=ET(),low=v.toLowerCase();
+ if(memb(t).some(m=>String(m).toLowerCase()===low||String(mn(m)).toLowerCase()===low)){alert('這個人已經在人員名單裡');return}
+ t.removed=(t.removed||[]).filter(x=>String(x).toLowerCase()!==low);t.members=t.members||[];t.members.push(v);touch(t);R()}
 function imgUp(el,p){const f=el.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{const im=new Image();im.onload=()=>{const mx=p==='bg'?900:320,k=Math.min(1,mx/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=im.width*k;c.height=im.height*k;c.getContext('2d').drawImage(im,0,0,c.width,c.height);const id=newImgId();imgSet(id,c.toDataURL('image/jpeg',.7));queueImg(id);setp(p,id);R()};im.src=r.result};r.readAsDataURL(f)}
 /* ---- 設定 ---- */
 function vSet(){const a=L.acct;return hero(null,'設定')+`<div class="pad" style="padding-top:16px">
